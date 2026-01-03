@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Faculty Subject Preference</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{margin:0;background:#f5f6fa;color:#333;}
+header{background:#43cea2;color:white;padding:20px;text-align:center;font-size:22px;font-weight:600;}
+.container{padding:20px;max-width:600px;margin:auto;}
+h2{margin:15px 0;text-align:center;}
+table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+table,th,td{border:1px solid #ccc;}
+th,td{padding:10px;text-align:center;}
+th{background:#43cea2;color:white;}
+button{padding:8px 14px;margin:5px;border:none;border-radius:6px;cursor:pointer;font-weight:500;background:#43cea2;color:white;}
+button:hover{opacity:0.9;}
+input{padding:6px;border-radius:6px;border:1px solid #ccc;width:90%;}
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .sidebar a, .sidebar h2, .logout {
+    flex: 1 0 auto;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .main {
+    padding: 10px;
+  }
+
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  th, td {
+    white-space: nowrap;
+  }
+
+  input, select, button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<header>Faculty Subject Preferences</header>
+<div class="container">
+
+<h2>Select Your Subjects and Priority (1-5)</h2>
+<table>
+<thead><tr><th>Subject</th><th>Priority</th></tr></thead>
+<tbody>
+<tr><td><input placeholder="Subject 1" id="sub1"></td><td><input type="number" min="1" max="5" value="1" id="prio1"></td></tr>
+<tr><td><input placeholder="Subject 2" id="sub2"></td><td><input type="number" min="1" max="5" value="2" id="prio2"></td></tr>
+<tr><td><input placeholder="Subject 3" id="sub3"></td><td><input type="number" min="1" max="5" value="3" id="prio3"></td></tr>
+<tr><td><input placeholder="Subject 4" id="sub4"></td><td><input type="number" min="1" max="5" value="4" id="prio4"></td></tr>
+<tr><td><input placeholder="Subject 5" id="sub5"></td><td><input type="number" min="1" max="5" value="5" id="prio5"></td></tr>
+</tbody>
+</table>
+
+<button onclick="savePreferences()">Save Preferences</button>
+<button onclick="backDashboard()">Back to Dashboard</button>
+
+</div>
+
+<script>
+if(localStorage.getItem("role")!=="faculty"){alert("Access denied"); location="index.html";}
+let user = localStorage.getItem("user");
+
+function savePreferences(){
+  let subjects=[];
+  for(let i=1;i<=5;i++){
+    let name=document.getElementById("sub"+i).value.trim();
+    let prio=parseInt(document.getElementById("prio"+i).value);
+    if(name){subjects.push({name, priority:prio});}
+  }
+  let faculty=JSON.parse(localStorage.getItem("faculty_"+user));
+  faculty.subjects=subjects;
+  localStorage.setItem("faculty_"+user,JSON.stringify(faculty));
+  alert("Preferences saved!");
+}
+
+function backDashboard(){location="faculty.html";}
+</script>
+</body>
+</html>

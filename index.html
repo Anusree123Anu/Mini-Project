@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Timetable | Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    *{box-sizing:border-box;font-family:'Poppins',sans-serif;}
+    body{
+      margin:0;
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background:linear-gradient(135deg,#667eea,#764ba2);
+    }
+    .card{
+      background:white;
+      width:380px;
+      padding:30px;
+      border-radius:14px;
+      text-align:center;
+      box-shadow:0 20px 40px rgba(0,0,0,.2);
+    }
+    h2,h3{margin:10px 0;color:#333;}
+    .role-buttons{display:flex;gap:15px;margin:20px 0;}
+    .roleBtn{
+      flex:1;
+      padding:15px;
+      border:none;
+      border-radius:10px;
+      color:white;
+      font-size:16px;
+      cursor:pointer;
+    }
+    .faculty{background:#43cea2;}
+    .admin{background:#185a9d;}
+    .student{
+  background:#f7971e; /* orange contrast */
+  }
+
+    input{
+      width:100%;
+      padding:12px;
+      margin:10px 0;
+      border-radius:8px;
+      border:1px solid #ccc;
+    }
+    button.loginBtn{
+      width:100%;
+      padding:14px;
+      background:#667eea;
+      color:white;
+      border:none;
+      border-radius:10px;
+      font-size:16px;
+      margin-top:10px;
+      cursor:pointer;
+    }
+    .link{
+      color:#667eea;
+      cursor:pointer;
+      text-decoration:none;
+      font-size:14px;
+    }
+    .hidden{display:none;}
+
+    /* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .sidebar a, .sidebar h2, .logout {
+    flex: 1 0 auto;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .main {
+    padding: 10px;
+  }
+
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  th, td {
+    white-space: nowrap;
+  }
+
+  input, select, button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>Smart Timetable System</h2>
+
+  <div class="role-buttons">
+    <button class="roleBtn faculty" onclick="selectRole('faculty')">Faculty</button>
+    <button class="roleBtn admin" onclick="selectRole('admin')">Admin</button>
+    <button class="roleBtn student" onclick="selectRole('student')">Student</button>
+  </div>
+
+  <div id="loginBox" class="hidden">
+    <h3 id="loginTitle"></h3>
+
+    <input id="loginUser" placeholder="Username">
+    <input id="loginPass" type="password" placeholder="Password">
+
+    <button class="loginBtn" onclick="login()">Login</button>
+
+    <!-- ADMIN FORGOT PASSWORD -->
+    <p id="adminForgot" class="hidden">
+      <a href="forget-password.html" class="link">Forgot Password?</a>
+    </p>
+
+    <!-- FACULTY FORGOT PASSWORD -->
+    <p id="facultyForgot" class="hidden">
+      <a href="faculty-forget-password.html" class="link">Forgot Password?</a>
+    </p>
+
+    <!-- STUDENT FORGOT PASSWORD -->
+    <p id="studentForgot" class="hidden">
+      <a href="student-forget-password.html" class="link">Forgot Password?</a>
+    </p>
+    
+
+    <!-- FACULTY REGISTER -->
+    <p id="registerText" class="hidden">
+      New Faculty?
+      <a href="registration.html" class="link">Register</a>
+    </p>
+  </div>
+</div>
+
+<script>
+let selectedRole = "";
+
+/* ================= ROLE SELECTION ================= */
+function selectRole(role){
+  selectedRole = role;
+  document.getElementById("loginBox").classList.remove("hidden");
+
+  const userInput = document.getElementById("loginUser");
+
+  if(role === "admin"){
+    document.getElementById("loginTitle").innerText = "Admin Login";
+    userInput.placeholder = "Admin Username";
+  }
+  else if(role === "faculty"){
+    document.getElementById("loginTitle").innerText = "Faculty Login";
+    userInput.placeholder = "Faculty Username";
+  }
+  else if(role === "student"){
+    document.getElementById("loginTitle").innerText = "Student Login";
+    userInput.placeholder = "Student Email";
+  }
+
+  document.getElementById("registerText")
+    .classList.toggle("hidden", role !== "faculty");
+
+  document.getElementById("adminForgot")
+    .classList.toggle("hidden", role !== "admin");
+
+  document.getElementById("facultyForgot")
+    .classList.toggle("hidden", role !== "faculty");
+
+  document.getElementById("studentForgot")
+    .classList.toggle("hidden", role !== "student");
+
+}
+
+
+/* ================= LOGIN ================= */
+function login(){
+  const u = loginUser.value.trim();
+  const p = loginPass.value.trim();
+
+  if(!u || !p){
+    alert("Please fill all fields");
+    return;
+  }
+
+  /* -------- ADMIN LOGIN (STATIC) -------- */
+  if(selectedRole === "admin"){
+    if(u === "admin" && p === "admin123"){
+      localStorage.clear();
+      localStorage.setItem("role","admin");
+      localStorage.setItem("adminUser",u);
+      location.href = "admin.html";
+    }else{
+      alert("Invalid admin credentials");
+    }
+  }
+
+  /* -------- FACULTY LOGIN (SERVER) -------- */
+  if(selectedRole === "faculty"){
+    fetch("/faculty/login",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ username:u, password:p })
+    })
+    .then(res=>res.json())
+    .then(data=>{
+      if(data.success){
+        localStorage.clear();
+        localStorage.setItem("role","faculty");
+        localStorage.setItem("facultyUser",u);
+        location.href="faculty.html";
+      }else{
+        alert(data.message);
+      }
+    });
+  }
+
+    /* STUDENT LOGIN */
+  /* STUDENT LOGIN */
+  if(selectedRole === "student"){
+  fetch("/student/login",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      email: u,
+      password: p   // regNo
+    })
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    if(data.success){
+      localStorage.clear();
+      localStorage.setItem("role","student");
+      localStorage.setItem("studentEmail", u);
+      location.href="student.html";
+    } else {
+      alert(data.message);
+    }
+  });
+}
+
+}
+</script>
+
+
+</body>
+</html>

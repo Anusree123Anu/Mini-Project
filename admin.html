@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+body{
+  font-family:Arial, sans-serif;
+  background:#f4f6fb;
+}
+
+/* ===== HEADER ===== */
+.top-header{
+  height:60px;
+  background:#667eea;
+  color:white;
+  display:flex;
+  align-items:center;
+  padding:0 20px;
+  font-size:20px;
+}
+
+/* ===== LAYOUT ===== */
+.wrapper{
+  display:flex;
+  height:calc(100vh - 60px);
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:220px;
+  background:#2d3748;
+  color:white;
+  display:flex;
+  flex-direction:column;
+}
+
+.sidebar h2{
+  text-align:center;
+  padding:20px 0;
+  font-size:18px;
+}
+
+/* NAV LINKS */
+.sidebar a{
+  padding:12px 20px;
+  color:white;
+  text-decoration:none;
+  cursor:pointer;
+}
+
+.sidebar a.active{
+  background:#4c51bf;
+}
+
+/* LOGOUT */
+.logout{
+  margin:20px;
+  background:#c53030;
+  padding:10px;
+  text-align:center;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+/* ===== MAIN ===== */
+.main{
+  flex:1;
+  padding:20px;
+  overflow-y:auto;
+}
+
+/* ===== SECTIONS ===== */
+.section{
+  display:none;
+}
+
+.section.active{
+  display:block;
+}
+
+/* ===== TABLE ===== */
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+th,td{
+  border:1px solid #aaa;
+  padding:8px;
+  text-align:center;
+}
+
+th{
+  background:#667eea;
+  color:white;
+}
+
+button{
+  padding:6px 12px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+button.approve{
+  background:#43cea2;
+  color:white;
+}
+
+button.save{
+  background:#667eea;
+  color:white;
+  margin-top:8px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- 🔐 AUTH CHECK -->
+<script>
+if(localStorage.getItem("role") !== "admin"){
+  location.href = "index.html";
+}
+</script>
+
+<!-- ===== HEADER ===== -->
+<div class="top-header">
+  Admin Panel
+</div>
+
+<!-- ===== BODY ===== -->
+<div class="wrapper">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>Admin</h2>
+
+    <a class="active" onclick="showSection('pending',this)">Pending Faculty</a>
+    <a onclick="showSection('approved',this)">Approved Faculty</a>
+    <a onclick="showSection('upload',this)">Upload Students</a>
+    <a onclick="goToManageSubjects()">Manage Subjects</a>
+
+    <div style="flex:1"></div>
+
+    <div class="logout" onclick="logoutAdmin()">Logout</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ================= PENDING FACULTY ================= -->
+    <div id="pending" class="section active">
+      <h3>Pending Faculty</h3>
+      <table>
+        <thead>
+          <tr><th>Username</th><th>Name</th><th>Action</th></tr>
+        </thead>
+        <tbody id="pendingFacultyTable"></tbody>
+      </table>
+    </div>
+
+    <!-- ================= APPROVED FACULTY ================= -->
+    <div id="approved" class="section">
+      <h3>Approved Faculty</h3>
+      <table>
+        <thead>
+          <tr><th>Username</th><th>Name</th><th>Subject Preferences</th></tr>
+        </thead>
+        <tbody id="facultyTable"></tbody>
+      </table>
+    </div>
+
+    <!-- ================= UPLOAD STUDENTS ================= -->
+    <div id="upload" class="section">
+      <h3>Upload Student Details</h3><br>
+      <input type="file" id="excelFile" accept=".xlsx">
+      <button class="save" onclick="uploadExcel()">Upload Excel</button>
+    </div>
+    
+
+  </div>
+</div>
+
+<script>
+/* ================= SECTION SWITCH ================= */
+function showSection(id, el){
+  document.querySelectorAll(".section").forEach(s =>
+    s.classList.remove("active")
+  );
+  document.getElementById(id).classList.add("active");
+
+  document.querySelectorAll(".sidebar a").forEach(a =>
+    a.classList.remove("active")
+  );
+  el.classList.add("active");
+
+  if(id === "pending") loadPendingFaculty();
+  if(id === "approved") loadApprovedFaculty();
+  if(id === "deadline") loadDeadline();
+}
+
+/* ================= LOGOUT ================= */
+function logoutAdmin(){
+  localStorage.clear();
+  location.href = "index.html";
+}
+
+/* ================= NAV ================= */
+function goToManageSubjects(){
+  location.href = "manage-subjects.html";
+}
+
+/* ================= PENDING FACULTY ================= */
+function loadPendingFaculty(){
+  fetch("/admin/pending-faculty")
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById("pendingFacultyTable");
+      tbody.innerHTML = "";
+
+      if(!data.faculty.length){
+        tbody.innerHTML = "<tr><td colspan='3'>No pending faculty</td></tr>";
+        return;
+      }
+
+      data.faculty.forEach(f => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${f.username}</td>
+            <td>${f.name}</td>
+            <td>
+              <button class="approve" onclick="approveFaculty('${f._id}')">
+                Approve
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    });
+}
+
+/* ================= APPROVED FACULTY ================= */
+function loadApprovedFaculty(){
+  fetch("/admin/approved-faculty")
+    .then(res => res.json())
+    .then(async data => {
+      const tbody = document.getElementById("facultyTable");
+      tbody.innerHTML = "";
+
+      if(!data.faculty.length){
+        tbody.innerHTML = "<tr><td colspan='3'>No approved faculty</td></tr>";
+        return;
+      }
+
+      for(const f of data.faculty){
+        let subjects = [];
+        try{
+          const res = await fetch(`/api/faculty/preferences/${f.username}`);
+          subjects = await res.json();
+        }catch{}
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${f.username}</td>
+            <td>${f.name}</td>
+            <td>${subjects.map(s => s.name).join(", ") || "No preferences"}</td>
+          </tr>
+        `;
+      }
+    });
+}
+
+/* ================= APPROVE ================= */
+function approveFaculty(id){
+  fetch("/admin/approve-faculty", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ facultyId:id })
+  }).then(()=>{
+    loadPendingFaculty();
+    loadApprovedFaculty();
+  });
+}
+
+/* ================= CSV UPLOAD ================= */
+async function uploadExcel() {
+  const fileInput = document.getElementById("excelFile");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("Please select an Excel file");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch("/admin/upload-students", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+    alert(data.message);
+    fileInput.value = "";
+  } catch (err) {
+    console.error(err);
+    alert("❌ Error uploading Excel");
+  }
+}
+
+
+/* ================= INITIAL ================= */
+loadPendingFaculty();
+loadApprovedFaculty();
+</script>
+
+</body>
+</html>

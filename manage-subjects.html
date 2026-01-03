@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Manage Subjects</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:Arial;
+  background:#f4f6fb;
+}
+
+/* ===== HEADER ===== */
+header{
+  height:60px;
+  background:#667eea;
+  color:white;
+  display:flex;
+  align-items:center;
+  padding:0 20px;
+  font-size:20px;
+}
+
+/* ===== LAYOUT ===== */
+.wrapper{
+  display:flex;
+  height:calc(100vh - 60px);
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:220px;
+  background:#2d3748;
+  color:white;
+  display:flex;
+  flex-direction:column;
+}
+
+.sidebar h2{
+  text-align:center;
+  padding:20px 0;
+}
+
+.sidebar a{
+  padding:12px 20px;
+  text-decoration:none;
+  color:white;
+  cursor:pointer;
+}
+
+.sidebar a.active{
+  background:#4c51bf;
+}
+
+.logout{
+  margin:20px;
+  background:#c53030;
+  padding:10px;
+  text-align:center;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main{
+  flex:1;
+  padding:20px;
+}
+
+input,select,button{
+  padding:8px;
+  margin:5px;
+}
+
+button{
+  background:#43cea2;
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+/* ===== TABLE ===== */
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+th,td{
+  border:1px solid #aaa;
+  padding:8px;
+  text-align:center;
+}
+
+th{
+  background:#667eea;
+  color:white;
+}
+
+.hidden{
+  display:none;
+}
+
+.deadline-box{
+  background:#fff;
+  padding:15px;
+  border-radius:8px;
+  margin-bottom:25px;
+  box-shadow:0 2px 5px rgba(0,0,0,.1);
+}
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .sidebar a, .sidebar h2, .logout {
+    flex: 1 0 auto;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .main {
+    padding: 10px;
+  }
+
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  th, td {
+    white-space: nowrap;
+  }
+
+  input, select, button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- 🔐 AUTH CHECK -->
+<script>
+if(localStorage.getItem("role") !== "admin"){
+  location.href = "index.html";
+}
+</script>
+
+<header>Admin Panel</header>
+
+<div class="wrapper">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>Admin</h2>
+
+    <a onclick="location.href='admin.html'">Pending Faculty</a>
+    <a onclick="location.href='admin.html#approved'">Approved Faculty</a>
+    <a onclick="location.href='admin.html#upload'">Upload Students</a>
+    <a class="active">Manage Subjects</a>
+
+    <div style="flex:1"></div>
+    <div class="logout" onclick="logoutAdmin()">Logout</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <h2>Department · Semester · Subject Management</h2><br>
+
+    <h3>Add Subject</h3>
+
+    <select id="dept" onchange="toggleCustomDept()">
+      <option value="">Select Department</option>
+      <option value="CSE">CSE</option>
+      <option value="IT">IT</option>
+      <option value="ECE">ECE</option>
+      <option value="EEE">EEE</option>
+      <option value="MECH">MECH</option>
+      <option value="CIVIL">CIVIL</option>
+      <option value="OTHER">Other</option>
+    </select>
+
+    <input id="customDept" class="hidden" placeholder="Enter Department">
+
+    <select id="sem">
+      <option value="">Semester</option>
+      <option>1</option><option>2</option><option>3</option>
+      <option>4</option><option>5</option><option>6</option>
+      <option>7</option><option>8</option>
+    </select>
+
+    <input id="subject" placeholder="Subject Name">
+    <button onclick="addSubject()">Add</button>
+
+    <h3 style="margin-top:30px">Configured Subjects</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Department</th>
+          <th>Semester</th>
+          <th>Subject</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="subjectTable"></tbody>
+    </table>
+
+  </div>
+</div>
+
+<script>
+/* ================= LOGOUT ================= */
+function logoutAdmin(){
+  localStorage.clear();
+  location.href="index.html";
+}
+
+/* ================= SUBJECT ================= */
+function toggleCustomDept(){
+  document.getElementById("customDept")
+    .classList.toggle("hidden",
+      document.getElementById("dept").value!=="OTHER");
+}
+
+async function addSubject(){
+  let dept=document.getElementById("dept").value;
+  const sem=document.getElementById("sem").value;
+  const sub=document.getElementById("subject").value.trim();
+
+  if(dept==="OTHER"){
+    dept=document.getElementById("customDept").value.trim().toUpperCase();
+  }
+
+  if(!dept||!sem||!sub){
+    alert("All fields required");
+    return;
+  }
+
+  await fetch("/api/subjects",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ department:dept, semester:sem, subject:sub })
+  });
+
+  document.getElementById("subject").value="";
+  render();
+}
+
+/* ================= RENDER SUBJECTS ================= */
+async function render(){
+  const tbody=document.getElementById("subjectTable");
+  tbody.innerHTML="";
+
+  const res=await fetch("/api/subjects");
+  const data=await res.json();
+
+  let found=false;
+
+  for(const dept in data){
+    for(const sem in data[dept]){
+      data[dept][sem].forEach(sub=>{
+        found=true;
+        tbody.innerHTML+=`
+          <tr>
+            <td>${dept}</td>
+            <td>${sem}</td>
+            <td>${sub}</td>
+            <td>
+              <button onclick="deleteSubject('${dept}','${sem}','${sub}')"
+                      style="background:#e53e3e;">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+  }
+
+  if(!found){
+    tbody.innerHTML="<tr><td colspan='4'>No subjects</td></tr>";
+  }
+}
+
+/* ================= DELETE SUBJECT ================= */
+async function deleteSubject(dept, sem, sub){
+  if(!confirm(`Delete subject ${sub} (${dept} - Semester ${sem})?`)) return;
+
+  await fetch("/api/subjects", {
+    method: "DELETE",
+    headers: { "Content-Type":"application/json" },
+    body: JSON.stringify({ department: dept, semester: sem, subject: sub })
+  });
+
+  render();
+}
+
+/* ================= INIT ================= */
+render();
+</script>
+
+</body>
+</html>
