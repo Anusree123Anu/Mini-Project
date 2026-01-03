@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Faculty Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:'Poppins',sans-serif;
+}
+
+body{
+  background:#f5f6fa;
+  color:#333;
+}
+
+/* ===== HEADER ===== */
+.top-header{
+  height:60px;
+  background:#43cea2;
+  color:white;
+  display:flex;
+  align-items:center;
+  padding:0 20px;
+  font-size:20px;
+  font-weight:600;
+}
+
+/* ===== LAYOUT ===== */
+.wrapper{
+  display:flex;
+  height:calc(100vh - 60px);
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:220px;
+  background:#2d3748;
+  color:white;
+  display:flex;
+  flex-direction:column;
+}
+
+.sidebar h2{
+  text-align:center;
+  padding:20px 0;
+  font-size:18px;
+}
+
+.sidebar a{
+  padding:12px 20px;
+  color:white;
+  text-decoration:none;
+  cursor:pointer;
+}
+
+.sidebar a.active{
+  background:#4c51bf;
+}
+
+/* LOGOUT */
+.logout{
+  margin:20px;
+  background:#c53030;
+  padding:10px;
+  text-align:center;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+/* ===== MAIN ===== */
+.main{
+  flex:1;
+  padding:20px;
+  overflow:auto;
+}
+
+/* ===== TABLES ===== */
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-bottom:20px;
+}
+
+table, th, td{
+  border:1px solid #ccc;
+}
+
+th, td{
+  padding:10px;
+  text-align:center;
+}
+
+th{
+  background:#43cea2;
+  color:white;
+}
+
+select{
+  padding:6px;
+  border-radius:5px;
+}
+
+button{
+  padding:8px 16px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:500;
+  background:#667eea;
+  color:white;
+}
+
+.no-data{
+  text-align:center;
+  padding:15px;
+  color:#666;
+}
+
+/* ===== SECTIONS ===== */
+.section{
+  display:none;
+}
+
+.section.active{
+  display:block;
+}
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .sidebar a, .sidebar h2, .logout {
+    flex: 1 0 auto;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .main {
+    padding: 10px;
+  }
+
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  th, td {
+    white-space: nowrap;
+  }
+
+  input, select, button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- 🔐 FACULTY AUTH CHECK -->
+<script>
+if(localStorage.getItem("role") !== "faculty"){
+  location.href = "index.html";
+}
+</script>
+
+<!-- HEADER -->
+<div class="top-header">
+  Faculty Dashboard
+</div>
+
+<!-- BODY -->
+<div class="wrapper">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>Faculty</h2>
+
+    <a class="active" onclick="showSection('preferences',this)">Subject Preferences</a>
+    <a onclick="showSection('timetable',this)">My Timetable</a>
+
+    <div style="flex:1"></div>
+
+    <div class="logout" onclick="logoutFaculty()">Logout</div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- SUBJECT PREFERENCES -->
+    <div id="preferences" class="section active">
+      <h2>Your Subject Preferences</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Rank</th>
+          </tr>
+        </thead>
+        <tbody id="subjectTable">
+          <tr>
+            <td colspan="2" class="no-data">Loading subjects...</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <button onclick="savePreferences()">Save Preferences</button>
+    </div>
+
+    <!-- TIMETABLE -->
+    <div id="timetable" class="section">
+      <h2>Your Timetable</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Day / Hour</th>
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
+            <th>4</th>
+            <th>5</th>
+          </tr>
+        </thead>
+        <tbody id="timetableBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ================= NAV ================= */
+function showSection(id, el){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active"));
+  el.classList.add("active");
+}
+
+/* ================= LOGOUT ================= */
+function logoutFaculty(){
+  localStorage.clear();
+  location.href="index.html";
+}
+
+/* ================= LOAD SUBJECTS ================= */
+fetch("/api/subjects")
+  .then(res => res.json())
+  .then(data => {
+    const tbody = document.getElementById("subjectTable");
+    tbody.innerHTML = "";
+
+    let subjects = [];
+
+    Object.keys(data).forEach(dept => {
+      Object.keys(data[dept]).forEach(sem => {
+        data[dept][sem].forEach(sub => {
+          subjects.push(sub);
+        });
+      });
+    });
+
+    if(subjects.length === 0){
+      tbody.innerHTML =
+        `<tr><td colspan="2" class="no-data">No subjects configured by admin</td></tr>`;
+      return;
+    }
+
+    subjects.forEach(sub => {
+      let options = "<option value=''>Select</option>";
+      for(let i=1;i<=subjects.length;i++){
+        options += `<option value="${i}">${i}</option>`;
+      }
+
+      tbody.innerHTML += `
+        <tr>
+          <td>${sub}</td>
+          <td><select>${options}</select></td>
+        </tr>`;
+    });
+  })
+  .catch(() => {
+    document.getElementById("subjectTable").innerHTML =
+      `<tr><td colspan="2" class="no-data">Server error</td></tr>`;
+  });
+
+/* ================= TIMETABLE ================= */
+function loadTimetable(){
+  const days = ["Monday","Tuesday","Wednesday","Thursday","Friday"];
+  const tbody = document.getElementById("timetableBody");
+  tbody.innerHTML = "";
+
+  days.forEach(day=>{
+    let row = `<tr><td>${day}</td>`;
+    for(let i=0;i<5;i++) row += "<td></td>";
+    row += "</tr>";
+    tbody.innerHTML += row;
+  });
+}
+
+loadTimetable();
+
+/* ================= SAVE ================= */
+function savePreferences(){
+  alert("Preferences saved (UI only for now)");
+}
+
+
+</script>
+
+</body>
+</html>

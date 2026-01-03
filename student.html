@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Student Dashboard</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:Arial, sans-serif;
+}
+
+body{
+  background:#f4f6fb;
+}
+
+/* ===== HEADER ===== */
+.top-header{
+  height:60px;
+  background:#ff9f43;
+  color:white;
+  display:flex;
+  align-items:center;
+  padding:0 20px;
+  font-size:20px;
+}
+
+/* ===== LAYOUT ===== */
+.wrapper{
+  display:flex;
+  height:calc(100vh - 60px);
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:220px;
+  background:#2d3748;
+  color:white;
+  display:flex;
+  flex-direction:column;
+}
+
+.sidebar h2{
+  text-align:center;
+  padding:20px 0;
+  font-size:18px;
+}
+
+/* NAV LINKS */
+.sidebar a{
+  padding:12px 20px;
+  color:white;
+  text-decoration:none;
+  cursor:pointer;
+}
+
+.sidebar a.active{
+  background:#ff9f43;
+}
+
+/* LOGOUT */
+.logout{
+  margin:20px;
+  background:#c53030;
+  padding:10px;
+  text-align:center;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+/* ===== MAIN ===== */
+.main{
+  flex:1;
+  padding:20px;
+  overflow-y:auto;
+}
+
+/* ===== TABLE ===== */
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+th,td{
+  border:1px solid #aaa;
+  padding:10px;
+  text-align:center;
+}
+
+th{
+  background:#ff9f43;
+  color:white;
+}
+</style>
+</head>
+
+<body>
+
+<!-- 🔐 AUTH CHECK -->
+<script>
+if(localStorage.getItem("role") !== "student"){
+  location.href = "index.html";
+}
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .sidebar a, .sidebar h2, .logout {
+    flex: 1 0 auto;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .main {
+    padding: 10px;
+  }
+
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  th, td {
+    white-space: nowrap;
+  }
+
+  input, select, button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+</script>
+
+<!-- ===== HEADER ===== -->
+<div class="top-header">
+  Student Dashboard
+</div>
+
+<!-- ===== BODY ===== -->
+<div class="wrapper">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>Student</h2>
+
+    <a class="active" onclick="showSection('timetable',this)">Timetable</a>
+
+    <div style="flex:1"></div>
+
+    <div class="logout" onclick="logoutStudent()">Logout</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ===== TIMETABLE ===== -->
+    <div id="timetable" class="section active">
+      <h3>Your Timetable</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Day / Hour</th>
+            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+          </tr>
+        </thead>
+        <tbody id="timetableBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ================= SECTION SWITCH ================= */
+function showSection(id, el){
+  document.querySelectorAll(".section").forEach(s =>
+    s.style.display = "none"
+  );
+  document.getElementById(id).style.display = "block";
+
+  document.querySelectorAll(".sidebar a").forEach(a =>
+    a.classList.remove("active")
+  );
+  el.classList.add("active");
+}
+
+/* ================= LOGOUT ================= */
+function logoutStudent(){
+  localStorage.clear();
+  location.href = "index.html";
+}
+
+/* ================= LOAD TIMETABLE ================= */
+const days=["Monday","Tuesday","Wednesday","Thursday","Friday"];
+const body=document.getElementById("timetableBody");
+
+days.forEach(d=>{
+  let row=`<tr><td>${d}</td>`;
+  for(let i=0;i<5;i++) row+="<td></td>";
+  row+="</tr>";
+  body.innerHTML+=row;
+});
+</script>
+
+</body>
+</html>

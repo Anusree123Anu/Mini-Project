@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Faculty Registration</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{margin:0;height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#43cea2,#185a9d);}
+.card{background:white;width:400px;padding:30px;border-radius:14px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.2);}
+input{width:100%;padding:12px;margin:10px 0;border-radius:8px;border:1px solid #ccc;}
+button{width:100%;padding:14px;background:#43cea2;color:white;border:none;border-radius:10px;font-size:16px;cursor:pointer;}
+button:hover{background:#36b38a;}
+.link{color:#667eea;cursor:pointer;text-decoration:none;font-size:14px;}
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .sidebar a, .sidebar h2, .logout {
+    flex: 1 0 auto;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .main {
+    padding: 10px;
+  }
+
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  th, td {
+    white-space: nowrap;
+  }
+
+  input, select, button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+</style>
+</head>
+<body>
+<div class="card">
+<h2>Faculty Registration</h2>
+<input id="name" placeholder="Full Name">
+<input id="dept" placeholder="Department">
+<input id="user" placeholder="Faculty ID">
+<input id="pass" type="password" placeholder="Password">
+<button onclick="register()">Submit for Approval</button>
+<p style="margin-top:10px;"><a href="index.html" class="link">Back to Login</a></p>
+</div>
+
+<script>
+function register(){
+  const name = document.getElementById("name").value.trim();
+  const dept = document.getElementById("dept").value.trim();
+  const username = document.getElementById("user").value.trim();
+  const password = document.getElementById("pass").value.trim();
+
+  if(!name || !dept || !username || !password){
+    alert("Fill all fields");
+    return;
+  }
+
+  fetch("http://localhost:3000/faculty/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username,
+      password,
+      name,
+      department: dept
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert(data.message);
+    if(data.success){
+      location = "index.html";
+    }
+  })
+  .catch(() => alert("Server error"));
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Faculty Subject Preferences</title>
+
+<style>
+body{
+  font-family:Arial;
+  background:#f4f6fb;
+  margin:0;
+}
+header{
+  background:#667eea;
+  color:white;
+  padding:15px;
+  text-align:center;
+  font-size:22px;
+}
+.container{
+  width:90%;
+  margin:auto;
+  padding:20px;
+}
+.section{
+  background:white;
+  margin-bottom:20px;
+  padding:15px;
+  border-radius:8px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  border:1px solid #aaa;
+  padding:8px;
+  text-align:center;
+}
+th{
+  background:#667eea;
+  color:white;
+}
+button{
+  background:#43cea2;
+  color:white;
+  border:none;
+  padding:10px 18px;
+  border-radius:6px;
+  cursor:pointer;
+}
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .sidebar a, .sidebar h2, .logout {
+    flex: 1 0 auto;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .main {
+    padding: 10px;
+  }
+
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  th, td {
+    white-space: nowrap;
+  }
+
+  input, select, button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<header>Faculty · Subject Preference Selection</header>
+
+<div class="container" id="content"></div>
+
+<div style="text-align:center;margin-bottom:30px;">
+  <button onclick="savePreferences()">Save Preferences</button>
+</div>
+
+<script>
+const username = localStorage.getItem("facultyUser");
+if(!username){
+  alert("Session expired. Login again.");
+  location.href = "index.html";
+}
+
+let allSubjects = {};
+let savedPrefs = [];
+
+async function loadData(){
+  allSubjects = await fetch("http://localhost:3000/api/subjects")
+    .then(r=>r.json());
+
+  savedPrefs = await fetch(
+    `http://localhost:3000/api/faculty/preferences/${username}`
+  ).then(r=>r.json());
+
+  render();
+}
+
+function render(){
+  const container = document.getElementById("content");
+  container.innerHTML = "";
+
+  Object.keys(allSubjects).forEach(dept=>{
+    Object.keys(allSubjects[dept]).forEach(sem=>{
+      let html = `
+        <div class="section">
+        <h3>${dept} · Semester ${sem}</h3>
+        <table>
+          <tr><th>Subject</th><th>Priority</th></tr>
+      `;
+
+      allSubjects[dept][sem].forEach(sub=>{
+        const pref = savedPrefs.find(
+          p=>p.department===dept &&
+             p.semester==sem &&
+             p.subject===sub
+        );
+
+        html += `
+          <tr>
+            <td>${sub}</td>
+            <td>
+              <select data-dept="${dept}"
+                      data-sem="${sem}"
+                      data-subject="${sub}">
+                <option value="">--</option>
+                <option value="1" ${pref?.priority==1?"selected":""}>1</option>
+                <option value="2" ${pref?.priority==2?"selected":""}>2</option>
+                <option value="3" ${pref?.priority==3?"selected":""}>3</option>
+              </select>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += "</table></div>";
+      container.innerHTML += html;
+    });
+  });
+}
+
+async function savePreferences(){
+  const preferences = [];
+  document.querySelectorAll("select[data-subject]").forEach(sel=>{
+    if(sel.value){
+      preferences.push({
+        department: sel.dataset.dept,
+        semester: sel.dataset.sem,
+        subject: sel.dataset.subject,
+        priority: Number(sel.value)
+      });
+    }
+  });
+
+  await fetch("http://localhost:3000/api/faculty/preferences",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ username, preferences })
+  });
+
+  alert("Preferences saved successfully");
+}
+
+loadData();
+</script>
+
+</body>
+</html>
